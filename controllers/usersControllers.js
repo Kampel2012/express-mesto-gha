@@ -30,7 +30,10 @@ export const getAllUsers = async (req, res) => {
 export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
-    res.status(201).send(user);
+    if (!user) {
+      throw new Error('CastError');
+    }
+    res.status(200).send(user);
   } catch (error) {
     errorHandler(error, res);
   }
@@ -58,9 +61,9 @@ export const updateUser = async (req, res) => {
       {
         new: true, // обработчик then получит на вход обновлённую запись
         runValidators: true, // данные будут валидированы перед изменением
-      },
+      }
     );
-    res.status(201).send(updatedUser);
+    res.status(200).send(updatedUser);
   } catch (error) {
     errorHandler(error, res);
   }
@@ -77,7 +80,7 @@ export const updateUsersAvatar = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      },
+      }
     );
     res.status(200).send(updatedUser);
   } catch (error) {
