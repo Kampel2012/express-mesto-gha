@@ -40,9 +40,14 @@ export const addNewCard = async (req, res) => {
 
 export const deleteCardById = async (req, res) => {
   try {
+    if (req.params.userId.length <= 20) {
+      res.status(400).send({ message: 'Некорректный id' });
+      return;
+    }
     const cardForChange = await Card.findById(req.params.cardId);
-    if (!cardForChange) {
-      throw new Error('CastError');
+    if (cardForChange == null) {
+      res.status(404).send({ message: 'Запрашиваемая карточка не найдена' });
+      return;
     }
     await Card.findByIdAndDelete(req.params.cardId);
     res.status(200).send({ message: 'Успешно удалено!' });
@@ -53,14 +58,19 @@ export const deleteCardById = async (req, res) => {
 
 export const likeCard = async (req, res) => {
   try {
+    if (req.params.userId.length <= 20) {
+      res.status(400).send({ message: 'Некорректный id' });
+      return;
+    }
     const cardForChange = await Card.findById(req.params.cardId);
-    if (!cardForChange) {
-      throw new Error('CastError');
+    if (cardForChange == null) {
+      res.status(404).send({ message: 'Запрашиваемая карточка не найдена' });
+      return;
     }
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
-      { new: true }
+      { new: true },
     );
     res.status(201).send(card);
   } catch (error) {
@@ -70,14 +80,19 @@ export const likeCard = async (req, res) => {
 
 export const dislikeCard = async (req, res) => {
   try {
+    if (req.params.userId.length <= 20) {
+      res.status(400).send({ message: 'Некорректный id' });
+      return;
+    }
     const cardForChange = await Card.findById(req.params.cardId);
-    if (!cardForChange) {
-      throw new Error('CastError');
+    if (cardForChange == null) {
+      res.status(404).send({ message: 'Запрашиваемая карточка не найдена' });
+      return;
     }
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } }, // убрать _id из массива
-      { new: true }
+      { new: true },
     );
     res.status(200).send(card);
   } catch (error) {
