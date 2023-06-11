@@ -25,4 +25,8 @@ app.use((req, res, next) => {
 
 app.use(routes);
 
+app.patch('/404', (req, res) => {
+  res.status(404).send({ message: 'Данная страница не найдена' });
+});
+
 app.listen(PORT);

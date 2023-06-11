@@ -57,7 +57,6 @@ export const deleteCardById = async (req, res) => {
 };
 
 export const likeCard = async (req, res) => {
-  console.log('here');
   try {
     if (req.params.cardId.length <= 20) {
       res.status(400).send({ message: 'Некорректный id' });
