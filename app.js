@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import routes from './routes/index.js';
 
-const { PORT = 3005 } = process.env;
+const { PORT = 3000 } = process.env;
 
 const app = express();
 
