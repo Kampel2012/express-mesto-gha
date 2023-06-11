@@ -3,7 +3,6 @@ import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import routes from './routes/index.js';
-import addOwnerMW from './middlewares/addOwner.js';
 
 const { PORT = 3005 } = process.env;
 
@@ -19,7 +18,13 @@ mongoose
 
 app.use(bodyParser.json());
 
-app.use(addOwnerMW);
+app.use((req, res, next) => {
+  req.user = {
+    _id: '648577eb507a479c8bb2b791',
+  };
+
+  next();
+});
 
 app.use(routes);
 
