@@ -40,7 +40,7 @@ export const addNewCard = async (req, res) => {
 
 export const deleteCardById = async (req, res) => {
   try {
-    if (req.params.userId.length <= 20) {
+    if (req.params.cardId.length <= 20) {
       res.status(400).send({ message: 'Некорректный id' });
       return;
     }
@@ -57,8 +57,9 @@ export const deleteCardById = async (req, res) => {
 };
 
 export const likeCard = async (req, res) => {
+  console.log('here');
   try {
-    if (req.params.userId.length <= 20) {
+    if (req.params.cardId.length <= 20) {
       res.status(400).send({ message: 'Некорректный id' });
       return;
     }
@@ -67,6 +68,7 @@ export const likeCard = async (req, res) => {
       res.status(404).send({ message: 'Запрашиваемая карточка не найдена' });
       return;
     }
+
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
@@ -80,7 +82,7 @@ export const likeCard = async (req, res) => {
 
 export const dislikeCard = async (req, res) => {
   try {
-    if (req.params.userId.length <= 20) {
+    if (req.params.cardId.length <= 20) {
       res.status(400).send({ message: 'Некорректный id' });
       return;
     }
