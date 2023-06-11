@@ -40,7 +40,7 @@ export const addNewCard = async (req, res) => {
 export const deleteCardById = async (req, res) => {
   try {
     await Card.findByIdAndDelete(req.params.cardId);
-    return res.status(201).send({ message: 'Успешно удалено!' });
+    res.status(201).send({ message: 'Успешно удалено!' });
   } catch (error) {
     errorHandler(error, res);
   }
@@ -51,7 +51,7 @@ export const likeCard = async (req, res) => {
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
-      { new: true }
+      { new: true },
     );
     res.status(201).send(card);
   } catch (error) {
@@ -64,7 +64,7 @@ export const dislikeCard = async (req, res) => {
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } }, // убрать _id из массива
-      { new: true }
+      { new: true },
     );
     res.status(201).send(card);
   } catch (error) {
