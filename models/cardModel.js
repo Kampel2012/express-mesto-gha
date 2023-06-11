@@ -5,16 +5,16 @@ const cardSchema = new mongoose.Schema({
     type: String,
     minLength: 2,
     maxLength: 30,
-    require: true,
+    required: true,
   },
   link: {
     type: String,
-    require: true,
+    required: true,
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
-    require: true,
+    required: true,
   },
   likes: {
     default: [],

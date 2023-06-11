@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
-    "dev": "cross-env PORT=3005 nodemon app.js"
+    "dev": "cross-env PORT=3000 nodemon app.js"
   },
   "author": "Kampel2012",
   "dependencies": {
