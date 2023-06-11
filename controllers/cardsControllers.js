@@ -29,8 +29,9 @@ export const getAllCards = async (req, res) => {
 
 export const addNewCard = async (req, res) => {
   try {
-    const newCard = req.body;
-    const card = await Card.create(newCard);
+    const { name, link } = req.body;
+    const owner = req.user._id;
+    const card = await Card.create({ name, link, owner });
     res.status(201).send(card);
   } catch (error) {
     errorHandler(error, res);
@@ -39,8 +40,12 @@ export const addNewCard = async (req, res) => {
 
 export const deleteCardById = async (req, res) => {
   try {
+    const cardForChange = await Card.findById(req.params.cardId);
+    if (!cardForChange) {
+      throw new Error('CastError');
+    }
     await Card.findByIdAndDelete(req.params.cardId);
-    res.status(201).send({ message: 'Успешно удалено!' });
+    res.status(200).send({ message: 'Успешно удалено!' });
   } catch (error) {
     errorHandler(error, res);
   }
@@ -48,10 +53,14 @@ export const deleteCardById = async (req, res) => {
 
 export const likeCard = async (req, res) => {
   try {
+    const cardForChange = await Card.findById(req.params.cardId);
+    if (!cardForChange) {
+      throw new Error('CastError');
+    }
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
-      { new: true },
+      { new: true }
     );
     res.status(201).send(card);
   } catch (error) {
@@ -61,12 +70,16 @@ export const likeCard = async (req, res) => {
 
 export const dislikeCard = async (req, res) => {
   try {
+    const cardForChange = await Card.findById(req.params.cardId);
+    if (!cardForChange) {
+      throw new Error('CastError');
+    }
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } }, // убрать _id из массива
-      { new: true },
+      { new: true }
     );
-    res.status(201).send(card);
+    res.status(200).send(card);
   } catch (error) {
     errorHandler(error, res);
   }

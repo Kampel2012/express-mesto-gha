@@ -79,7 +79,7 @@ export const updateUsersAvatar = async (req, res) => {
         runValidators: true,
       },
     );
-    res.status(201).send(updatedUser);
+    res.status(200).send(updatedUser);
   } catch (error) {
     errorHandler(error, res);
   }
