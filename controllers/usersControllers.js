@@ -53,41 +53,24 @@ export const addNewUser = async (req, res) => {
   }
 };
 
-export const updateUser = async (req, res) => {
+export const update = async (req, res, varibles) => {
   try {
-    const { name, about } = req.body;
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      {
-        name,
-        about,
-      },
-      {
-        new: true, // обработчик then получит на вход обновлённую запись
-        runValidators: true, // данные будут валидированы перед изменением
-      }
-    ).orFail();
+    const newData = {};
+    varibles.forEach((item) => (obj[item] = req.body[item]));
+    const updatedUser = await User.findByIdAndUpdate(req.user._id, newData, {
+      new: true, // обработчик then получит на вход обновлённую запись
+      runValidators: true, // данные будут валидированы перед изменением
+    }).orFail();
     res.status(200).send(updatedUser);
   } catch (error) {
     errorHandler(error, res);
   }
 };
 
+export const updateUser = async (req, res) => {
+  update(req, res, ['name', 'about']);
+};
+
 export const updateUsersAvatar = async (req, res) => {
-  try {
-    const { avatar } = req.body;
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      {
-        avatar,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    ).orFail();
-    res.status(200).send(updatedUser);
-  } catch (error) {
-    errorHandler(error, res);
-  }
+  update(req, res, ['avatar']);
 };
