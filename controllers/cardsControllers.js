@@ -1,7 +1,8 @@
+import mongoose from 'mongoose';
 import Card from '../models/cardModel.js';
 
 function errorHandler(error, res) {
-  if (error.name === 'ValidationError') {
+  if (error instanceof mongoose.Error.ValidationError){
     return res.status(400).send({
       message: `${Object.values(error.errors)
         .map((err) => err.message)
@@ -9,9 +10,15 @@ function errorHandler(error, res) {
     });
   }
 
-  if (error.message === 'Not found') {
+  if (error instanceof mongoose.Error.DocumentNotFoundError) {
     return res.status(404).send({
       message: 'Запрашиваемая карточка не найдена',
+    });
+  }
+
+  if (error instanceof mongoose.Error.CastError) {
+    return res.status(400).send({
+      message: 'Некорректный id',
     });
   }
 
@@ -40,13 +47,7 @@ export const addNewCard = async (req, res) => {
 
 export const deleteCardById = async (req, res) => {
   try {
-    if (req.params.cardId.length <= 20) {
-      res.status(400).send({ message: 'Некорректный id' });
-      return;
-    }
-    await Card.findByIdAndDelete(req.params.cardId).orFail(() =>
-      Error('Not found')
-    );
+    await Card.findByIdAndDelete(req.params.cardId).orFail();
     res.status(200).send({ message: 'Успешно удалено!' });
   } catch (error) {
     console.log(error);
@@ -56,16 +57,11 @@ export const deleteCardById = async (req, res) => {
 
 export const likeCard = async (req, res) => {
   try {
-    if (req.params.cardId.length <= 20) {
-      res.status(400).send({ message: 'Некорректный id' });
-      return;
-    }
-
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
       { new: true }
-    ).orFail(() => Error('Not found'));
+    ).orFail();
 
     res.status(201).send(card);
   } catch (error) {
@@ -75,15 +71,11 @@ export const likeCard = async (req, res) => {
 
 export const dislikeCard = async (req, res) => {
   try {
-    if (req.params.cardId.length <= 20) {
-      res.status(400).send({ message: 'Некорректный id' });
-      return;
-    }
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } }, // убрать _id из массива
       { new: true }
-    ).orFail(() => Error('Not found'));
+    ).orFail();
     res.status(200).send(card);
   } catch (error) {
     errorHandler(error, res);

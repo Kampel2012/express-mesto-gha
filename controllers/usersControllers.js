@@ -1,7 +1,7 @@
 import User from '../models/userModel.js';
 
 function errorHandler(error, res) {
-  if (error.name === 'ValidationError') {
+  if (error instanceof mongoose.Error.ValidationError) {
     return res.status(400).send({
       message: `${Object.values(error.errors)
         .map((err) => err.message)
@@ -9,9 +9,15 @@ function errorHandler(error, res) {
     });
   }
 
-  if (error.message === 'Not found') {
+  if (error instanceof mongoose.Error.DocumentNotFoundError) {
     return res.status(404).send({
       message: 'Запрашиваемая карточка не найдена',
+    });
+  }
+
+  if (error instanceof mongoose.Error.CastError) {
+    return res.status(400).send({
+      message: 'Некорректный id',
     });
   }
 
@@ -29,13 +35,7 @@ export const getAllUsers = async (req, res) => {
 
 export const getUserById = async (req, res) => {
   try {
-    if (req.params.userId.length <= 20) {
-      res.status(400).send({ message: 'Некорректный id' });
-      return;
-    }
-    const user = await User.findById(req.params.userId).orFail(() =>
-      Error('Not found')
-    );
+    const user = await User.findById(req.params.userId).orFail();
     res.status(200).send(user);
   } catch (error) {
     errorHandler(error, res);
@@ -65,7 +65,7 @@ export const updateUser = async (req, res) => {
         new: true, // обработчик then получит на вход обновлённую запись
         runValidators: true, // данные будут валидированы перед изменением
       }
-    ).orFail(() => Error('Not found'));
+    ).orFail();
     res.status(200).send(updatedUser);
   } catch (error) {
     errorHandler(error, res);
@@ -84,7 +84,7 @@ export const updateUsersAvatar = async (req, res) => {
         new: true,
         runValidators: true,
       }
-    ).orFail(() => Error('Not found'));
+    ).orFail();
     res.status(200).send(updatedUser);
   } catch (error) {
     errorHandler(error, res);
