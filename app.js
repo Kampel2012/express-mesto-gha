@@ -23,7 +23,7 @@ app.use((req, res, next) => {
 
 app.use(routes);
 
-app.patch('/', (req, res) => {
+app.use((req, res) => {
   res.status(404).send({ message: 'Данная страница не найдена' });
 });
 
