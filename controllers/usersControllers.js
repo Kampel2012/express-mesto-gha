@@ -1,9 +1,10 @@
+import { constants as http2Constants } from 'node:http2';
 import mongoose from 'mongoose';
 import User from '../models/userModel.js';
 
 function errorHandler(error, res) {
   if (error instanceof mongoose.Error.ValidationError) {
-    return res.status(400).send({
+    return res.status(http2Constants.HTTP_STATUS_BAD_REQUEST).send({
       message: `${Object.values(error.errors)
         .map((err) => err.message)
         .join(', ')}`,
@@ -11,24 +12,26 @@ function errorHandler(error, res) {
   }
 
   if (error instanceof mongoose.Error.DocumentNotFoundError) {
-    return res.status(404).send({
+    return res.status(http2Constants.HTTP_STATUS_NOT_FOUND).send({
       message: 'Запрашиваемая карточка не найдена',
     });
   }
 
   if (error instanceof mongoose.Error.CastError) {
-    return res.status(400).send({
+    return res.status(http2Constants.HTTP_STATUS_BAD_REQUEST).send({
       message: 'Некорректный id',
     });
   }
 
-  return res.status(500).send({ message: 'Server Error' });
+  return res
+    .status(http2Constants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
+    .send({ message: 'Server Error' });
 }
 
 export const getAllUsers = async (req, res) => {
   try {
     const allUsers = await User.find({});
-    res.status(200).send(allUsers);
+    res.status(http2Constants.HTTP_STATUS_OK).send(allUsers);
   } catch (error) {
     errorHandler(error, res);
   }
@@ -37,7 +40,7 @@ export const getAllUsers = async (req, res) => {
 export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).orFail();
-    res.status(200).send(user);
+    res.status(http2Constants.HTTP_STATUS_OK).send(user);
   } catch (error) {
     errorHandler(error, res);
   }
@@ -47,7 +50,7 @@ export const addNewUser = async (req, res) => {
   try {
     const newUser = req.body;
     const user = await User.create(newUser);
-    res.status(201).send(user);
+    res.status(http2Constants.HTTP_STATUS_CREATED).send(user);
   } catch (error) {
     errorHandler(error, res);
   }
@@ -56,12 +59,14 @@ export const addNewUser = async (req, res) => {
 export const update = async (req, res, varibles) => {
   try {
     const newData = {};
-    varibles.forEach((item) => (newData[item] = req.body[item]));
+    varibles.forEach((item) => {
+      newData[item] = req.body[item];
+    });
     const updatedUser = await User.findByIdAndUpdate(req.user._id, newData, {
       new: true, // обработчик then получит на вход обновлённую запись
       runValidators: true, // данные будут валидированы перед изменением
     }).orFail();
-    res.status(200).send(updatedUser);
+    res.status(http2Constants.HTTP_STATUS_OK).send(updatedUser);
   } catch (error) {
     errorHandler(error, res);
   }

@@ -1,4 +1,4 @@
-/* eslint-disable import/extensions */
+import { constants as http2Constants } from 'node:http2';
 import express from 'express';
 import mongoose from 'mongoose';
 import routes from './routes/index.js';
@@ -24,7 +24,9 @@ app.use((req, res, next) => {
 app.use(routes);
 
 app.use((req, res) => {
-  res.status(404).send({ message: 'Данная страница не найдена' });
+  res
+    .status(http2Constants.HTTP_STATUS_NOT_FOUND)
+    .send({ message: 'Данная страница не найдена' });
 });
 
 app.listen(PORT);
