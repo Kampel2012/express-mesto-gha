@@ -8,6 +8,13 @@ function errorHandler(error, res) {
         .join(', ')}`,
     });
   }
+
+  if (error.name === 'CastError') {
+    return res.status(404).send({
+      message: 'Запрашиваемый пользователь не найден',
+    });
+  }
+
   return res.status(500).send({ message: 'Server Error' });
 }
 
