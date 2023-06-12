@@ -50,7 +50,6 @@ export const deleteCardById = async (req, res) => {
     const errCheck = await checkCorrectRequest(req);
     if (errCheck !== []) {
       res.status(errCheck.status).send(errCheck.message);
-      return;
     }
 
     await Card.findByIdAndDelete(req.params.cardId);
@@ -65,7 +64,6 @@ export const likeCard = async (req, res) => {
     const errCheck = await checkCorrectRequest(req);
     if (errCheck !== []) {
       res.status(errCheck.status).send(errCheck.message);
-      return;
     }
 
     const card = await Card.findByIdAndUpdate(
@@ -84,7 +82,6 @@ export const dislikeCard = async (req, res) => {
     const errCheck = await checkCorrectRequest(req);
     if (errCheck !== []) {
       res.status(errCheck.status).send(errCheck.message);
-      return;
     }
 
     const card = await Card.findByIdAndUpdate(
