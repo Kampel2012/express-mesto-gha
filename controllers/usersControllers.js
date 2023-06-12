@@ -54,23 +54,27 @@ export const addNewUser = async (req, res) => {
 };
 
 export const update = async (req, res, varibles) => {
+  const newData = {};
+  varibles.forEach((item) => (obj[item] = req.body[item]));
+  const updatedUser = await User.findByIdAndUpdate(req.user._id, newData, {
+    new: true, // обработчик then получит на вход обновлённую запись
+    runValidators: true, // данные будут валидированы перед изменением
+  }).orFail();
+  res.status(200).send(updatedUser);
+};
+
+export const updateUser = async (req, res) => {
   try {
-    const newData = {};
-    varibles.forEach((item) => (obj[item] = req.body[item]));
-    const updatedUser = await User.findByIdAndUpdate(req.user._id, newData, {
-      new: true, // обработчик then получит на вход обновлённую запись
-      runValidators: true, // данные будут валидированы перед изменением
-    }).orFail();
-    res.status(200).send(updatedUser);
+    update(req, res, ['name', 'about']);
   } catch (error) {
     errorHandler(error, res);
   }
 };
 
-export const updateUser = async (req, res) => {
-  update(req, res, ['name', 'about']);
-};
-
 export const updateUsersAvatar = async (req, res) => {
-  update(req, res, ['avatar']);
+  try {
+    update(req, res, ['avatar']);
+  } catch (error) {
+    errorHandler(error, res);
+  }
 };
