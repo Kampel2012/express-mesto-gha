@@ -9,9 +9,9 @@ function errorHandler(error, res) {
     });
   }
 
-  if (error.name === 'CastError') {
+  if (error.message === 'Not found') {
     return res.status(404).send({
-      message: 'Запрашиваемый пользователь не найден',
+      message: 'Запрашиваемая карточка не найдена',
     });
   }
 
@@ -33,11 +33,9 @@ export const getUserById = async (req, res) => {
       res.status(400).send({ message: 'Некорректный id' });
       return;
     }
-    const user = await User.findById(req.params.userId);
-    if (user == null) {
-      res.status(404).send({ message: 'Запрашиваемый пользователь не найден' });
-      return;
-    }
+    const user = await User.findById(req.params.userId).orFail(() =>
+      Error('Not found')
+    );
     res.status(200).send(user);
   } catch (error) {
     errorHandler(error, res);
@@ -66,8 +64,8 @@ export const updateUser = async (req, res) => {
       {
         new: true, // обработчик then получит на вход обновлённую запись
         runValidators: true, // данные будут валидированы перед изменением
-      },
-    );
+      }
+    ).orFail(() => Error('Not found'));
     res.status(200).send(updatedUser);
   } catch (error) {
     errorHandler(error, res);
@@ -85,8 +83,8 @@ export const updateUsersAvatar = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      },
-    );
+      }
+    ).orFail(() => Error('Not found'));
     res.status(200).send(updatedUser);
   } catch (error) {
     errorHandler(error, res);
