@@ -121,7 +121,7 @@ export async function login(req, res) {
         expires: new Date(Date.now() + 7 * 24 * 3600000),
         httpOnly: true,
       })
-      .send({ jwt: `Bearer ${token}` });
+      .send({ jwt: token });
   } catch (error) {
     errorHandler(error, res);
   }
@@ -140,8 +140,10 @@ export async function addNewUser(req, res) {
 
     newUser.password = await bcrypt.hash(newUser.password, SALT_ROUNDES);
     const user = await User.create(newUser);
-    const {email, name, about, avatar} = user
-    res.status(http2Constants.HTTP_STATUS_CREATED).send({email, name, about, avatar});
+    const { email, name, about, avatar } = user;
+    res
+      .status(http2Constants.HTTP_STATUS_CREATED)
+      .send({ email, name, about, avatar });
   } catch (error) {
     errorHandler(error, res);
   }
