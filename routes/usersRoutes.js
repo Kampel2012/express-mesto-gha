@@ -4,11 +4,14 @@ import {
   getUserById,
   updateUser,
   updateUsersAvatar,
+  getUserInfo,
 } from "../controllers/usersControllers.js";
 
 const router = Router();
 
 router.get("/", getAllUsers);
+
+router.get("/me", getUserInfo);
 
 router.get("/:userId", getUserById);
 

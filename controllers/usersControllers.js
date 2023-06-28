@@ -83,9 +83,9 @@ export async function login(req, res) {
     const { email, password } = req.body;
     const user = await User.findOne({ email }).orFail();
     if (user.password === password) {
-      const _id = "d285e3dceed844f902650f40";
+      const _id = user._id;
       const token = jwt.sign(
-        { _id } /* { _id: user._id }, */, //! из примера тут _id
+        { _id: user._id },
         "e041e9c9fbc63d5ba0de72298f8d8f54",
         { expiresIn: "7d" }
       ); //md5
@@ -117,6 +117,16 @@ export async function addNewUser(req, res) {
       throw new mongoose.Error.ValidationError("Введите корректный email");
     }
   } catch (error) {
+    errorHandler(error, res);
+  }
+}
+
+export async function getUserInfo(req, res) {
+  try {
+    const user = await User.findById(req.user._id).orFail();
+    res.status(http2Constants.HTTP_STATUS_OK).send(user);
+  } catch (error) {
+    console.log(error);
     errorHandler(error, res);
   }
 }

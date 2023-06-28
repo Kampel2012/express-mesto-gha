@@ -3,7 +3,7 @@ import express from "express";
 import mongoose from "mongoose";
 import routes from "./routes/index.js";
 import { login, addNewUser } from "./controllers/usersControllers.js";
-import auth from "./middlewares/auth.js";
+import midllewareAuth from "./middlewares/auth.js";
 
 const { PORT = 3000 } = process.env;
 
@@ -17,18 +17,10 @@ mongoose
 
 app.use(express.json());
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: "648577eb507a479c8bb2b791",
-  };
-
-  next();
-});
-
 app.post("/signin", login);
 app.post("/signup", addNewUser);
 
-app.use(auth);
+app.use(midllewareAuth);
 
 app.use(routes);
 
