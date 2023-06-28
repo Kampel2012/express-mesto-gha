@@ -1,6 +1,7 @@
 import { constants as http2Constants } from "node:http2";
 import validator from "validator";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
 
 function errorHandler(error, res) {
@@ -14,7 +15,7 @@ function errorHandler(error, res) {
 
   if (error instanceof mongoose.Error.DocumentNotFoundError) {
     return res.status(http2Constants.HTTP_STATUS_NOT_FOUND).send({
-      message: "Запрашиваемая карточка не найдена",
+      message: "Запрашиваемый пользователь не найден",
     });
   }
 
@@ -53,21 +54,6 @@ export const getUserById = async (req, res) => {
   }
 };
 
-export const addNewUser = async (req, res) => {
-  try {
-    const newUser = req.body;
-    const validEm = validator.isEmail(req.body.email);
-    if (validEm) {
-      const user = await User.create(newUser);
-      res.status(http2Constants.HTTP_STATUS_CREATED).send(user);
-    } else {
-      throw new mongoose.Error.ValidationError("Введите корректный email");
-    }
-  } catch (error) {
-    errorHandler(error, res);
-  }
-};
-
 export const update = async (req, res, varibles) => {
   try {
     const newData = {};
@@ -91,3 +77,45 @@ export const updateUser = async (req, res) => {
 export const updateUsersAvatar = async (req, res) => {
   await update(req, res, ["avatar"]);
 };
+
+export async function login(req, res) {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email }).orFail();
+    if (user.password === password) {
+      const _id = "d285e3dceed844f902650f40";
+      const token = jwt.sign(
+        { _id } /* { _id: user._id }, */, //! из примера тут _id
+        "e041e9c9fbc63d5ba0de72298f8d8f54",
+        { expiresIn: "7d" }
+      ); //md5
+      res
+        .status(http2Constants.HTTP_STATUS_OK)
+        .cookie("access_token", "Bearer " + token, {
+          expires: new Date(Date.now() + 7 * 24 * 3600000), // cookie will be removed after 8 hours
+        })
+        .send({ _id });
+    } else {
+      res
+        .status(http2Constants.HTTP_STATUS_UNAUTHORIZED)
+        .send("Неверный логин или пароль"); //! хардкод
+    }
+  } catch (error) {
+    errorHandler(error, res);
+  }
+}
+
+export async function addNewUser(req, res) {
+  try {
+    const newUser = req.body;
+    const validEm = validator.isEmail(newUser.email);
+    if (validEm) {
+      const user = await User.create(newUser);
+      res.status(http2Constants.HTTP_STATUS_CREATED).send(user);
+    } else {
+      throw new mongoose.Error.ValidationError("Введите корректный email");
+    }
+  } catch (error) {
+    errorHandler(error, res);
+  }
+}
