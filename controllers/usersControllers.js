@@ -92,7 +92,8 @@ export async function login(req, res) {
       res
         .status(http2Constants.HTTP_STATUS_OK)
         .cookie("access_token", "Bearer " + token, {
-          expires: new Date(Date.now() + 7 * 24 * 3600000), // cookie will be removed after 8 hours
+          expires: new Date(Date.now() + 7 * 24 * 3600000),
+          httpOnly: true,
         })
         .send({ _id });
     } else {
