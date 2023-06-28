@@ -77,7 +77,7 @@ export const update = async (req, res, varibles) => {
     });
     const updatedUser = await User.findByIdAndUpdate(req.user._id, newData, {
       new: true, // обработчик then получит на вход обновлённую запись
-      runValidators: true, // данные будут валидированы перед изменением
+      runValidators: true, // данные будут валидированы перед изменением 
     }).orFail();
     res.status(http2Constants.HTTP_STATUS_OK).send(updatedUser);
   } catch (error) {
