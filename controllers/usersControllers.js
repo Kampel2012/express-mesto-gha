@@ -77,7 +77,7 @@ export const update = async (req, res, varibles) => {
     });
     const updatedUser = await User.findByIdAndUpdate(req.user._id, newData, {
       new: true, // обработчик then получит на вход обновлённую запись
-      runValidators: true, // данные будут валидированы перед изменением 
+      runValidators: true, // данные будут валидированы перед изменением
     }).orFail();
     res.status(http2Constants.HTTP_STATUS_OK).send(updatedUser);
   } catch (error) {
@@ -121,7 +121,7 @@ export async function login(req, res) {
         expires: new Date(Date.now() + 7 * 24 * 3600000),
         httpOnly: true,
       })
-      .send({ _id, token: `Bearer ${token}` });
+      .send({ jwt: `Bearer ${token}` });
   } catch (error) {
     errorHandler(error, res);
   }
