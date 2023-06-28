@@ -81,7 +81,7 @@ export const updateUsersAvatar = async (req, res) => {
 export async function login(req, res) {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email }).orFail();
+    const user = await User.findOne({ email }).select("+password").orFail();
     if (user.password === password) {
       const _id = user._id;
       const token = jwt.sign(
