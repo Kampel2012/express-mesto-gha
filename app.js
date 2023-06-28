@@ -3,6 +3,7 @@ import express from "express";
 import mongoose from "mongoose";
 import routes from "./routes/index.js";
 import { login, addNewUser } from "./controllers/usersControllers.js";
+import auth from "./middlewares/auth.js";
 
 const { PORT = 3000 } = process.env;
 
@@ -26,6 +27,8 @@ app.use((req, res, next) => {
 
 app.post("/signin", login);
 app.post("/signup", addNewUser);
+
+app.use(auth);
 
 app.use(routes);
 

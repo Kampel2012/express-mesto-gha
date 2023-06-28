@@ -91,11 +91,11 @@ export async function login(req, res) {
       ); //md5
       res
         .status(http2Constants.HTTP_STATUS_OK)
-        .cookie("access_token", "Bearer " + token, {
+        .cookie("access_token", `Bearer ${token}`, {
           expires: new Date(Date.now() + 7 * 24 * 3600000),
           httpOnly: true,
         })
-        .send({ _id });
+        .send({ _id, token: `Bearer ${token}` });
     } else {
       res
         .status(http2Constants.HTTP_STATUS_UNAUTHORIZED)
