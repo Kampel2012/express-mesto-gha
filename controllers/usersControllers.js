@@ -90,10 +90,14 @@ export const updateUser = async (req, res) => {
 };
 
 export const updateUsersAvatar = async (req, res) => {
-  if (!req.body.avatar || !validator.isURL(req.body.avatar)) {
-    throw new mongoose.Error.ValidationError();
+  try {
+    if (!req.body.avatar || !validator.isURL(req.body.avatar)) {
+      throw new mongoose.Error.ValidationError();
+    }
+    await update(req, res, ["avatar"]);
+  } catch (error) {
+    errorHandler(error, res);
   }
-  await update(req, res, ["avatar"]);
 };
 
 export async function login(req, res) {
