@@ -1,54 +1,54 @@
-import { constants as http2Constants } from "node:http2";
-import validator from "validator";
-import mongoose from "mongoose";
-import jwt from "jsonwebtoken";
-import User from "../models/userModel.js";
-import bcrypt from "bcrypt";
+import { constants as http2Constants } from 'node:http2';
+import validator from 'validator';
+import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
+import User from '../models/userModel.js';
+import bcrypt from 'bcrypt';
 
-const SECRET_KEY = "e041e9c9fbc63d5ba0de72298f8d8f54"; //md5
+const SECRET_KEY = 'e041e9c9fbc63d5ba0de72298f8d8f54';
 const SALT_ROUNDES = 10;
 
 class ErrorLogin extends Error {
   constructor(message) {
     super(message);
-    this.name = "ErrorLogin";
+    this.name = 'ErrorLogin';
   }
 }
 
 function errorHandler(error, res) {
   if (error instanceof ErrorLogin) {
     return res.status(http2Constants.HTTP_STATUS_UNAUTHORIZED).send({
-      message: "Неверный логин или пароль",
+      message: 'Неверный логин или пароль',
     });
   }
 
   if (error instanceof mongoose.Error.ValidationError) {
     return res.status(http2Constants.HTTP_STATUS_BAD_REQUEST).send({
-      message: "Неправильно заполнены поля",
+      message: 'Неправильно заполнены поля',
     });
   }
 
   if (error instanceof mongoose.Error.DocumentNotFoundError) {
     return res.status(http2Constants.HTTP_STATUS_NOT_FOUND).send({
-      message: "Запрашиваемый пользователь не найден",
+      message: 'Запрашиваемый пользователь не найден',
     });
   }
 
   if (error instanceof mongoose.Error.CastError) {
     return res.status(http2Constants.HTTP_STATUS_BAD_REQUEST).send({
-      message: "Некорректный id",
+      message: 'Некорректный id',
     });
   }
 
   if (error.code === 11000) {
     return res.status(http2Constants.HTTP_STATUS_CONFLICT).send({
-      message: "Пользователь с таким значением уже существует.",
+      message: 'Пользователь с таким значением уже существует.',
     });
   }
 
   return res
     .status(http2Constants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-    .send({ message: "Server Error" });
+    .send({ message: 'Server Error' });
 }
 
 export const getAllUsers = async (req, res) => {
@@ -86,7 +86,7 @@ export const update = async (req, res, varibles) => {
 };
 
 export const updateUser = async (req, res) => {
-  await update(req, res, ["name", "about"]);
+  await update(req, res, ['name', 'about']);
 };
 
 export const updateUsersAvatar = async (req, res) => {
@@ -94,7 +94,7 @@ export const updateUsersAvatar = async (req, res) => {
     if (!req.body.avatar || !validator.isURL(req.body.avatar)) {
       throw new mongoose.Error.ValidationError();
     }
-    await update(req, res, ["avatar"]);
+    await update(req, res, ['avatar']);
   } catch (error) {
     errorHandler(error, res);
   }
@@ -103,11 +103,12 @@ export const updateUsersAvatar = async (req, res) => {
 export async function login(req, res) {
   try {
     const { email, password } = req.body;
-    if (!email || !password || !validator.isEmail(email))
+    if (!email || !password || !validator.isEmail(email)) {
       throw new mongoose.Error.ValidationError();
+    }
 
     const user = await User.findOne({ email })
-      .select("+password")
+      .select('+password')
       .orFail(() => {
         throw new ErrorLogin();
       });
@@ -115,13 +116,13 @@ export async function login(req, res) {
     const compare = await bcrypt.compare(password, user.password);
     if (!compare) throw new ErrorLogin();
 
-    const _id = user._id;
-    const token = jwt.sign({ _id: user._id }, SECRET_KEY, {
-      expiresIn: "7d",
+    const { _id } = user;
+    const token = jwt.sign({ _id }, SECRET_KEY, {
+      expiresIn: '7d',
     });
     res
       .status(http2Constants.HTTP_STATUS_OK)
-      .cookie("access_token", `Bearer ${token}`, {
+      .cookie('access_token', `Bearer ${token}`, {
         expires: new Date(Date.now() + 7 * 24 * 3600000),
         httpOnly: true,
       })
@@ -135,19 +136,24 @@ export async function addNewUser(req, res) {
   try {
     const newUser = req.body;
     if (
-      !newUser.email ||
-      !newUser.password ||
-      !validator.isEmail(newUser.email) ||
-      (newUser.avatar && !validator.isURL(newUser.avatar))
-    )
+      !newUser.email
+      || !newUser.password
+      || !validator.isEmail(newUser.email)
+      || (newUser.avatar && !validator.isURL(newUser.avatar))
+    ) {
       throw new mongoose.Error.ValidationError();
+    }
 
     newUser.password = await bcrypt.hash(newUser.password, SALT_ROUNDES);
     const user = await User.create(newUser);
-    const { email, name, about, avatar } = user;
+    const {
+      email, name, about, avatar,
+    } = user;
     res
       .status(http2Constants.HTTP_STATUS_CREATED)
-      .send({ email, name, about, avatar });
+      .send({
+        email, name, about, avatar,
+      });
   } catch (error) {
     errorHandler(error, res);
   }
