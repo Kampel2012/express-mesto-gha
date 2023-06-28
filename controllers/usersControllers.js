@@ -140,8 +140,8 @@ export async function addNewUser(req, res) {
 
     newUser.password = await bcrypt.hash(newUser.password, SALT_ROUNDES);
     const user = await User.create(newUser);
-
-    res.status(http2Constants.HTTP_STATUS_CREATED).send(user._id);
+    const {email, name, about, avatar} = user
+    res.status(http2Constants.HTTP_STATUS_CREATED).send({email, name, about, avatar});
   } catch (error) {
     errorHandler(error, res);
   }
