@@ -99,6 +99,9 @@ export const updateUsersAvatar = async (req, res) => {
 export async function login(req, res) {
   try {
     const { email, password } = req.body;
+    if (!email || !password || !validator.isEmail(email))
+      throw new mongoose.Error.ValidationError();
+
     const user = await User.findOne({ email })
       .select("+password")
       .orFail(() => {
@@ -126,14 +129,19 @@ export async function login(req, res) {
 
 export async function addNewUser(req, res) {
   try {
-    const { email, password } = req.body;
-    if (!email || !password || !validator.isEmail(email))
+    const newUser = req.body;
+    if (
+      !newUser.email ||
+      !newUser.password ||
+      !validator.isEmail(newUser.email) ||
+      (newUser.avatar && !validator.isURL(newUser.avatar))
+    )
       throw new mongoose.Error.ValidationError();
 
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDES);
-    const user = await User.create({ email, password: hashedPassword });
+    newUser.password = await bcrypt.hash(newUser.password, SALT_ROUNDES);
+    const user = await User.create(newUser);
 
-    res.status(http2Constants.HTTP_STATUS_CREATED).send(user);
+    res.status(http2Constants.HTTP_STATUS_CREATED).send(user._id);
   } catch (error) {
     errorHandler(error, res);
   }
