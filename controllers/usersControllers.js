@@ -3,13 +3,28 @@ import validator from "validator";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import bcrypt from "bcrypt";
+
+const SECRET_KEY = "e041e9c9fbc63d5ba0de72298f8d8f54"; //md5
+const SALT_ROUNDES = 10;
+
+class ErrorLogin extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "ErrorLogin";
+  }
+}
 
 function errorHandler(error, res) {
+  if (error instanceof ErrorLogin) {
+    return res.status(http2Constants.HTTP_STATUS_UNAUTHORIZED).send({
+      message: "Неверный логин или пароль",
+    });
+  }
+
   if (error instanceof mongoose.Error.ValidationError) {
     return res.status(http2Constants.HTTP_STATUS_BAD_REQUEST).send({
-      message: `${Object.values(error.errors)
-        .map((err) => err.message)
-        .join(", ")}`,
+      message: "Неправильно заполнены поля",
     });
   }
 
@@ -27,7 +42,7 @@ function errorHandler(error, res) {
 
   if (error.code === 11000) {
     return res.status(http2Constants.HTTP_STATUS_CONFLICT).send({
-      message: "Поле с таким значением уже существует.",
+      message: "Пользователь с таким значением уже существует.",
     });
   }
 
@@ -75,32 +90,35 @@ export const updateUser = async (req, res) => {
 };
 
 export const updateUsersAvatar = async (req, res) => {
+  if (!req.body.avatar || !validator.isURL(req.body.avatar)) {
+    throw new mongoose.Error.ValidationError();
+  }
   await update(req, res, ["avatar"]);
 };
 
 export async function login(req, res) {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email }).select("+password").orFail();
-    if (user.password === password) {
-      const _id = user._id;
-      const token = jwt.sign(
-        { _id: user._id },
-        "e041e9c9fbc63d5ba0de72298f8d8f54",
-        { expiresIn: "7d" }
-      ); //md5
-      res
-        .status(http2Constants.HTTP_STATUS_OK)
-        .cookie("access_token", `Bearer ${token}`, {
-          expires: new Date(Date.now() + 7 * 24 * 3600000),
-          httpOnly: true,
-        })
-        .send({ _id, token: `Bearer ${token}` });
-    } else {
-      res
-        .status(http2Constants.HTTP_STATUS_UNAUTHORIZED)
-        .send("Неверный логин или пароль"); //! хардкод
-    }
+    const user = await User.findOne({ email })
+      .select("+password")
+      .orFail(() => {
+        throw new ErrorLogin();
+      });
+
+    const compare = await bcrypt.compare(password, user.password);
+    if (!compare) throw new ErrorLogin();
+
+    const _id = user._id;
+    const token = jwt.sign({ _id: user._id }, SECRET_KEY, {
+      expiresIn: "7d",
+    });
+    res
+      .status(http2Constants.HTTP_STATUS_OK)
+      .cookie("access_token", `Bearer ${token}`, {
+        expires: new Date(Date.now() + 7 * 24 * 3600000),
+        httpOnly: true,
+      })
+      .send({ _id, token: `Bearer ${token}` });
   } catch (error) {
     errorHandler(error, res);
   }
@@ -108,14 +126,14 @@ export async function login(req, res) {
 
 export async function addNewUser(req, res) {
   try {
-    const newUser = req.body;
-    const validEm = validator.isEmail(newUser.email);
-    if (validEm) {
-      const user = await User.create(newUser);
-      res.status(http2Constants.HTTP_STATUS_CREATED).send(user);
-    } else {
-      throw new mongoose.Error.ValidationError("Введите корректный email");
-    }
+    const { email, password } = req.body;
+    if (!email || !password || !validator.isEmail(email))
+      throw new mongoose.Error.ValidationError();
+
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDES);
+    const user = await User.create({ email, password: hashedPassword });
+
+    res.status(http2Constants.HTTP_STATUS_CREATED).send(user);
   } catch (error) {
     errorHandler(error, res);
   }
@@ -126,7 +144,6 @@ export async function getUserInfo(req, res) {
     const user = await User.findById(req.user._id).orFail();
     res.status(http2Constants.HTTP_STATUS_OK).send(user);
   } catch (error) {
-    console.log(error);
     errorHandler(error, res);
   }
 }

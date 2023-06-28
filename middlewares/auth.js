@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import { constants as http2Constants } from "node:http2";
 
+const SECRET_KEY = "e041e9c9fbc63d5ba0de72298f8d8f54";
+
 export default function auth(req, res, next) {
   const { authorization } = req.headers;
 
@@ -12,7 +14,7 @@ export default function auth(req, res, next) {
   let payload;
 
   try {
-    payload = jwt.verify(token, "e041e9c9fbc63d5ba0de72298f8d8f54");
+    payload = jwt.verify(token, SECRET_KEY);
   } catch (error) {
     return res
       .status(http2Constants.HTTP_STATUS_UNAUTHORIZED)

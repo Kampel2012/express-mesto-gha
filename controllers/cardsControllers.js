@@ -1,13 +1,25 @@
 import { constants as http2Constants } from "node:http2";
 import mongoose from "mongoose";
+import validator from "validator";
 import Card from "../models/cardModel.js";
 
+class ErrorNotEnoughRights extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "ErrorNotEnoughRights";
+  }
+}
+
 function errorHandler(error, res) {
+  if (error instanceof ErrorNotEnoughRights) {
+    return res.status(http2Constants.HTTP_STATUS_FORBIDDEN).send({
+      message: "Недостаточно прав для данного действия",
+    });
+  }
+
   if (error instanceof mongoose.Error.ValidationError) {
     return res.status(http2Constants.HTTP_STATUS_BAD_REQUEST).send({
-      message: `${Object.values(error.errors)
-        .map((err) => err.message)
-        .join(", ")}`,
+      message: "Неправильно заполнены поля",
     });
   }
 
@@ -40,7 +52,8 @@ export const getAllCards = async (req, res) => {
 export const addNewCard = async (req, res) => {
   try {
     const { name, link } = req.body;
-    const owner = req.user._id;
+    if (!link || !validator.isURL(link))
+      throw new mongoose.Error.ValidationError();
     const card = await Card.create({ name, link, owner });
     res.status(http2Constants.HTTP_STATUS_CREATED).send(card);
   } catch (error) {
@@ -52,7 +65,7 @@ export const deleteCardById = async (req, res) => {
   try {
     const card = await Card.findById(req.params.cardId).orFail();
     console.log(card.owner, req.user._id);
-    if (card.owner != req.user._id) throw new Error("Недостаточно прав"); //! Сделать адекватно
+    if (card.owner != req.user._id) throw new ErrorNotEnoughRights();
     await Card.findByIdAndDelete(req.params.cardId).orFail();
     res
       .status(http2Constants.HTTP_STATUS_OK)
