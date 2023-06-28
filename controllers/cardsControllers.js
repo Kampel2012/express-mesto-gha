@@ -81,7 +81,7 @@ export const likeCard = async (req, res) => {
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
-      { new: true },
+      { new: true }
     ).orFail();
 
     res.status(http2Constants.HTTP_STATUS_CREATED).send(card);
@@ -95,7 +95,7 @@ export const dislikeCard = async (req, res) => {
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } }, // убрать _id из массива
-      { new: true },
+      { new: true }
     ).orFail();
     res.status(http2Constants.HTTP_STATUS_OK).send(card);
   } catch (error) {

@@ -1,11 +1,10 @@
 import { constants as http2Constants } from 'node:http2';
 import validator from 'validator';
 import mongoose from 'mongoose';
-import jwt from 'jsonwebtoken';
-import User from '../models/userModel.js';
 import bcrypt from 'bcrypt';
+import User from '../models/userModel.js';
+import { generateToken } from '../utils/jwt.js';
 
-const SECRET_KEY = 'e041e9c9fbc63d5ba0de72298f8d8f54';
 const SALT_ROUNDES = 10;
 
 class ErrorLogin extends Error {
@@ -117,9 +116,8 @@ export async function login(req, res) {
     if (!compare) throw new ErrorLogin();
 
     const { _id } = user;
-    const token = jwt.sign({ _id }, SECRET_KEY, {
-      expiresIn: '7d',
-    });
+    const token = generateToken(_id);
+
     res
       .status(http2Constants.HTTP_STATUS_OK)
       .cookie('access_token', `Bearer ${token}`, {
@@ -136,24 +134,23 @@ export async function addNewUser(req, res) {
   try {
     const newUser = req.body;
     if (
-      !newUser.email
-      || !newUser.password
-      || !validator.isEmail(newUser.email)
-      || (newUser.avatar && !validator.isURL(newUser.avatar))
+      !newUser.email ||
+      !newUser.password ||
+      !validator.isEmail(newUser.email) ||
+      (newUser.avatar && !validator.isURL(newUser.avatar))
     ) {
       throw new mongoose.Error.ValidationError();
     }
 
     newUser.password = await bcrypt.hash(newUser.password, SALT_ROUNDES);
     const user = await User.create(newUser);
-    const {
-      email, name, about, avatar,
-    } = user;
-    res
-      .status(http2Constants.HTTP_STATUS_CREATED)
-      .send({
-        email, name, about, avatar,
-      });
+    const { email, name, about, avatar } = user;
+    res.status(http2Constants.HTTP_STATUS_CREATED).send({
+      email,
+      name,
+      about,
+      avatar,
+    });
   } catch (error) {
     errorHandler(error, res);
   }
