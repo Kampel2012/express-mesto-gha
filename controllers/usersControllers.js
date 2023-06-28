@@ -1,31 +1,38 @@
-import { constants as http2Constants } from 'node:http2';
-import mongoose from 'mongoose';
-import User from '../models/userModel.js';
+import { constants as http2Constants } from "node:http2";
+import validator from "validator";
+import mongoose from "mongoose";
+import User from "../models/userModel.js";
 
 function errorHandler(error, res) {
   if (error instanceof mongoose.Error.ValidationError) {
     return res.status(http2Constants.HTTP_STATUS_BAD_REQUEST).send({
       message: `${Object.values(error.errors)
         .map((err) => err.message)
-        .join(', ')}`,
+        .join(", ")}`,
     });
   }
 
   if (error instanceof mongoose.Error.DocumentNotFoundError) {
     return res.status(http2Constants.HTTP_STATUS_NOT_FOUND).send({
-      message: 'Запрашиваемая карточка не найдена',
+      message: "Запрашиваемая карточка не найдена",
     });
   }
 
   if (error instanceof mongoose.Error.CastError) {
     return res.status(http2Constants.HTTP_STATUS_BAD_REQUEST).send({
-      message: 'Некорректный id',
+      message: "Некорректный id",
+    });
+  }
+
+  if (error.code === 11000) {
+    return res.status(http2Constants.HTTP_STATUS_CONFLICT).send({
+      message: "Поле с таким значением уже существует.",
     });
   }
 
   return res
     .status(http2Constants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-    .send({ message: 'Server Error' });
+    .send({ message: "Server Error" });
 }
 
 export const getAllUsers = async (req, res) => {
@@ -49,8 +56,13 @@ export const getUserById = async (req, res) => {
 export const addNewUser = async (req, res) => {
   try {
     const newUser = req.body;
-    const user = await User.create(newUser);
-    res.status(http2Constants.HTTP_STATUS_CREATED).send(user);
+    const validEm = validator.isEmail(req.body.email);
+    if (validEm) {
+      const user = await User.create(newUser);
+      res.status(http2Constants.HTTP_STATUS_CREATED).send(user);
+    } else {
+      throw new mongoose.Error.ValidationError("Введите корректный email");
+    }
   } catch (error) {
     errorHandler(error, res);
   }
@@ -73,9 +85,9 @@ export const update = async (req, res, varibles) => {
 };
 
 export const updateUser = async (req, res) => {
-  await update(req, res, ['name', 'about']);
+  await update(req, res, ["name", "about"]);
 };
 
 export const updateUsersAvatar = async (req, res) => {
-  await update(req, res, ['avatar']);
+  await update(req, res, ["avatar"]);
 };
