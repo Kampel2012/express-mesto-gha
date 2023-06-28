@@ -52,11 +52,14 @@ export const getAllCards = async (req, res) => {
 export const addNewCard = async (req, res) => {
   try {
     const { name, link } = req.body;
+    const { _id } = req.user;
     if (!link || !validator.isURL(link))
       throw new mongoose.Error.ValidationError();
-    const card = await Card.create({ name, link, owner });
+
+    const card = await Card.create({ name, link, owner: _id });
     res.status(http2Constants.HTTP_STATUS_CREATED).send(card);
   } catch (error) {
+    console.log(error);
     errorHandler(error, res);
   }
 };
