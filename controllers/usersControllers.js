@@ -4,71 +4,55 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import User from '../models/userModel.js';
 import { generateToken } from '../utils/jwt.js';
+import {
+  UnauthorizedError,
+  BadRequestError,
+  NotFoundError,
+  ValidationError,
+  ConflictError,
+} from '../errors/errors.js';
 
 const SALT_ROUNDES = 10;
 
-class ErrorLogin extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'ErrorLogin';
-  }
-}
-
-function errorHandler(error, res) {
-  if (error instanceof ErrorLogin) {
-    return res.status(http2Constants.HTTP_STATUS_UNAUTHORIZED).send({
-      message: 'Неверный логин или пароль',
-    });
-  }
-
+function errorHandler(error, res, next) {
   if (error instanceof mongoose.Error.ValidationError) {
-    return res.status(http2Constants.HTTP_STATUS_BAD_REQUEST).send({
-      message: 'Неправильно заполнены поля',
-    });
+    next(new ValidationError('Неправильно заполнены поля'));
   }
 
   if (error instanceof mongoose.Error.DocumentNotFoundError) {
-    return res.status(http2Constants.HTTP_STATUS_NOT_FOUND).send({
-      message: 'Запрашиваемый пользователь не найден',
-    });
+    next(new NotFoundError('Запрашиваемый пользователь не найден'));
   }
 
   if (error instanceof mongoose.Error.CastError) {
-    return res.status(http2Constants.HTTP_STATUS_BAD_REQUEST).send({
-      message: 'Некорректный id',
-    });
+    next(new BadRequestError('Некорректный id'));
   }
 
   if (error.code === 11000) {
-    return res.status(http2Constants.HTTP_STATUS_CONFLICT).send({
-      message: 'Пользователь с таким значением уже существует.',
-    });
+    next(new ConflictError('Пользователь с таким значением уже существует.'));
   }
 
-  return res
-    .status(http2Constants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-    .send({ message: 'Server Error' });
+  next(error);
 }
 
-export const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req, res, next) => {
   try {
     const allUsers = await User.find({});
     res.status(http2Constants.HTTP_STATUS_OK).send(allUsers);
   } catch (error) {
-    errorHandler(error, res);
+    errorHandler(error, res, next);
   }
 };
 
-export const getUserById = async (req, res) => {
+export const getUserById = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId).orFail();
     res.status(http2Constants.HTTP_STATUS_OK).send(user);
   } catch (error) {
-    errorHandler(error, res);
+    errorHandler(error, res, next);
   }
 };
 
-export const update = async (req, res, varibles) => {
+export const update = async (req, res, next, varibles) => {
   try {
     const newData = {};
     varibles.forEach((item) => {
@@ -80,26 +64,26 @@ export const update = async (req, res, varibles) => {
     }).orFail();
     res.status(http2Constants.HTTP_STATUS_OK).send(updatedUser);
   } catch (error) {
-    errorHandler(error, res);
+    errorHandler(error, res, next);
   }
 };
 
-export const updateUser = async (req, res) => {
-  await update(req, res, ['name', 'about']);
+export const updateUser = async (req, res, next) => {
+  await update(req, res, next, ['name', 'about']);
 };
 
-export const updateUsersAvatar = async (req, res) => {
+export const updateUsersAvatar = async (req, res, next) => {
   try {
     if (!req.body.avatar || !validator.isURL(req.body.avatar)) {
       throw new mongoose.Error.ValidationError();
     }
     await update(req, res, ['avatar']);
   } catch (error) {
-    errorHandler(error, res);
+    errorHandler(error, res, next);
   }
 };
 
-export async function login(req, res) {
+export async function login(req, res, next) {
   try {
     const { email, password } = req.body;
     if (!email || !password || !validator.isEmail(email)) {
@@ -109,11 +93,11 @@ export async function login(req, res) {
     const user = await User.findOne({ email })
       .select('+password')
       .orFail(() => {
-        throw new ErrorLogin();
+        throw new UnauthorizedError('Неверный логин или пароль');
       });
 
     const compare = await bcrypt.compare(password, user.password);
-    if (!compare) throw new ErrorLogin();
+    if (!compare) throw new UnauthorizedError('Неверный логин или пароль');
 
     const { _id } = user;
     const token = generateToken(_id);
@@ -126,11 +110,11 @@ export async function login(req, res) {
       })
       .send({ jwt: token });
   } catch (error) {
-    errorHandler(error, res);
+    errorHandler(error, res, next);
   }
 }
 
-export async function addNewUser(req, res) {
+export async function addNewUser(req, res, next) {
   try {
     const newUser = req.body;
     if (
@@ -152,15 +136,15 @@ export async function addNewUser(req, res) {
       avatar,
     });
   } catch (error) {
-    errorHandler(error, res);
+    errorHandler(error, res, next);
   }
 }
 
-export async function getUserInfo(req, res) {
+export async function getUserInfo(req, res, next) {
   try {
     const user = await User.findById(req.user._id).orFail();
     res.status(http2Constants.HTTP_STATUS_OK).send(user);
   } catch (error) {
-    errorHandler(error, res);
+    errorHandler(error, res, next);
   }
 }

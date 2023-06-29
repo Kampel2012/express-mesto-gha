@@ -2,54 +2,39 @@ import { constants as http2Constants } from 'node:http2';
 import mongoose from 'mongoose';
 import validator from 'validator';
 import Card from '../models/cardModel.js';
+import {
+  BadRequestError,
+  NotFoundError,
+  ValidationError,
+  ForbiddenError,
+} from '../errors/errors.js';
 
-class ErrorNotEnoughRights extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'ErrorNotEnoughRights';
-  }
-}
-
-function errorHandler(error, res) {
-  if (error instanceof ErrorNotEnoughRights) {
-    return res.status(http2Constants.HTTP_STATUS_FORBIDDEN).send({
-      message: 'Недостаточно прав для данного действия',
-    });
-  }
-
+function errorHandler(error, res, next) {
   if (error instanceof mongoose.Error.ValidationError) {
-    return res.status(http2Constants.HTTP_STATUS_BAD_REQUEST).send({
-      message: 'Неправильно заполнены поля',
-    });
+    next(new ValidationError('Неправильно заполнены поля'));
   }
 
   if (error instanceof mongoose.Error.DocumentNotFoundError) {
-    return res.status(http2Constants.HTTP_STATUS_NOT_FOUND).send({
-      message: 'Запрашиваемая карточка не найдена',
-    });
+    next(new NotFoundError('Запрашиваемая карточка не найдена'));
   }
 
   if (error instanceof mongoose.Error.CastError) {
-    return res.status(http2Constants.HTTP_STATUS_BAD_REQUEST).send({
-      message: 'Некорректный id',
-    });
+    next(new BadRequestError('Некорректный id'));
   }
 
-  return res
-    .status(http2Constants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-    .send({ message: 'Server Error' });
+  next(error);
 }
 
-export const getAllCards = async (req, res) => {
+export const getAllCards = async (req, res, next) => {
   try {
     const allCards = await Card.find({});
     res.status(http2Constants.HTTP_STATUS_OK).send(allCards);
   } catch (error) {
-    errorHandler(error, res);
+    errorHandler(error, res, next);
   }
 };
 
-export const addNewCard = async (req, res) => {
+export const addNewCard = async (req, res, next) => {
   try {
     const { name, link } = req.body;
     const { _id } = req.user;
@@ -59,24 +44,26 @@ export const addNewCard = async (req, res) => {
     const card = await Card.create({ name, link, owner: _id });
     res.status(http2Constants.HTTP_STATUS_CREATED).send(card);
   } catch (error) {
-    errorHandler(error, res);
+    errorHandler(error, res, next);
   }
 };
 
-export const deleteCardById = async (req, res) => {
+export const deleteCardById = async (req, res, next) => {
   try {
     const card = await Card.findById(req.params.cardId).orFail();
-    if (card.owner != req.user._id) throw new ErrorNotEnoughRights();
+    if (card.owner != req.user._id) {
+      throw new ForbiddenError('Недостаточно прав для данного действия');
+    }
     await Card.findByIdAndDelete(req.params.cardId).orFail();
     res
       .status(http2Constants.HTTP_STATUS_OK)
       .send({ message: 'Успешно удалено!' });
   } catch (error) {
-    errorHandler(error, res);
+    errorHandler(error, res, next);
   }
 };
 
-export const likeCard = async (req, res) => {
+export const likeCard = async (req, res, next) => {
   try {
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -86,11 +73,11 @@ export const likeCard = async (req, res) => {
 
     res.status(http2Constants.HTTP_STATUS_CREATED).send(card);
   } catch (error) {
-    errorHandler(error, res);
+    errorHandler(error, res, next);
   }
 };
 
-export const dislikeCard = async (req, res) => {
+export const dislikeCard = async (req, res, next) => {
   try {
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -99,6 +86,6 @@ export const dislikeCard = async (req, res) => {
     ).orFail();
     res.status(http2Constants.HTTP_STATUS_OK).send(card);
   } catch (error) {
-    errorHandler(error, res);
+    errorHandler(error, res, next);
   }
 };
