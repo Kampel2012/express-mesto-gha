@@ -51,7 +51,7 @@ export const addNewCard = async (req, res, next) => {
 export const deleteCardById = async (req, res, next) => {
   try {
     const card = await Card.findById(req.params.cardId).orFail();
-    if (card.owner != req.user._id) {
+    if (card.owner.toString() !== req.user._id) {
       throw new ForbiddenError('Недостаточно прав для данного действия');
     }
     await Card.findByIdAndDelete(req.params.cardId).orFail();
@@ -68,7 +68,7 @@ export const likeCard = async (req, res, next) => {
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
-      { new: true }
+      { new: true },
     ).orFail();
 
     res.status(http2Constants.HTTP_STATUS_CREATED).send(card);
@@ -82,7 +82,7 @@ export const dislikeCard = async (req, res, next) => {
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } }, // убрать _id из массива
-      { new: true }
+      { new: true },
     ).orFail();
     res.status(http2Constants.HTTP_STATUS_OK).send(card);
   } catch (error) {

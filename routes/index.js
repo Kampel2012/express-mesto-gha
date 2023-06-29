@@ -4,7 +4,7 @@ import { login, addNewUser } from '../controllers/usersControllers.js';
 import auth from '../middlewares/auth.js';
 import userRouter from './usersRoutes.js';
 import cardRouter from './cardsRoutes.js';
-import { validationRegex } from '../utils/constants.js';
+import validationRegex from '../utils/constants.js';
 
 const router = Router();
 
@@ -16,7 +16,7 @@ router.use(
       password: Joi.string().required(),
     }),
   }),
-  login
+  login,
 );
 router.use(
   '/signup',
@@ -29,7 +29,7 @@ router.use(
       password: Joi.string().required(),
     }),
   }),
-  addNewUser
+  addNewUser,
 );
 
 router.use('/users', auth, userRouter);

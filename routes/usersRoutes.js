@@ -8,7 +8,7 @@ import {
   getUserInfo,
 } from '../controllers/usersControllers.js';
 
-import { validationRegex } from '../utils/constants.js';
+import validationRegex from '../utils/constants.js';
 
 const router = Router();
 
@@ -21,7 +21,7 @@ router.get(
       _id: Joi.string().alphanum().length(24).hex(),
     }),
   }),
-  getUserInfo
+  getUserInfo,
 );
 
 router.get(
@@ -31,7 +31,7 @@ router.get(
       userId: Joi.string().alphanum().length(24).hex(),
     }),
   }),
-  getUserById
+  getUserById,
 );
 
 router.patch(
@@ -42,7 +42,7 @@ router.patch(
       about: Joi.string().min(2).max(30),
     }),
   }),
-  updateUser
+  updateUser,
 );
 
 router.patch(
@@ -52,7 +52,7 @@ router.patch(
       avatar: Joi.string().regex(validationRegex),
     }),
   }),
-  updateUsersAvatar
+  updateUsersAvatar,
 );
 
 export default router;

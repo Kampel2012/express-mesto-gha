@@ -7,7 +7,7 @@ import {
   likeCard,
   dislikeCard,
 } from '../controllers/cardsControllers.js';
-import { validationRegex } from '../utils/constants.js';
+import validationRegex from '../utils/constants.js';
 
 const router = Router();
 
@@ -24,7 +24,7 @@ router.post(
       link: Joi.string().required().regex(validationRegex),
     }),
   }),
-  addNewCard
+  addNewCard,
 );
 
 router.delete(
@@ -34,7 +34,7 @@ router.delete(
       cardId: Joi.string().alphanum().length(24).hex(),
     }),
   }),
-  deleteCardById
+  deleteCardById,
 );
 
 router.put(
@@ -44,7 +44,7 @@ router.put(
       cardId: Joi.string().alphanum().length(24).hex(),
     }),
   }),
-  likeCard
+  likeCard,
 );
 
 router.delete(
@@ -54,7 +54,7 @@ router.delete(
       cardId: Joi.string().alphanum().length(24).hex(),
     }),
   }),
-  dislikeCard
+  dislikeCard,
 );
 
 export default router;

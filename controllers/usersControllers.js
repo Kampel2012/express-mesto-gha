@@ -118,17 +118,19 @@ export async function addNewUser(req, res, next) {
   try {
     const newUser = req.body;
     if (
-      !newUser.email ||
-      !newUser.password ||
-      !validator.isEmail(newUser.email) ||
-      (newUser.avatar && !validator.isURL(newUser.avatar))
+      !newUser.email
+      || !newUser.password
+      || !validator.isEmail(newUser.email)
+      || (newUser.avatar && !validator.isURL(newUser.avatar))
     ) {
       throw new mongoose.Error.ValidationError();
     }
 
     newUser.password = await bcrypt.hash(newUser.password, SALT_ROUNDES);
     const user = await User.create(newUser);
-    const { email, name, about, avatar } = user;
+    const {
+      email, name, about, avatar,
+    } = user;
     res.status(http2Constants.HTTP_STATUS_CREATED).send({
       email,
       name,

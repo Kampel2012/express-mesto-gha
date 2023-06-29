@@ -1,4 +1,3 @@
-import { constants as http2Constants } from 'node:http2';
 import express from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -32,7 +31,7 @@ app.use(express.json());
 
 app.use(routes);
 
-app.use('*', (req, res) => {
+app.use('*', () => {
   throw new NotFoundError('Данная страница не найдена');
 });
 
