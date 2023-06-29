@@ -77,7 +77,7 @@ export const updateUsersAvatar = async (req, res, next) => {
     if (!req.body.avatar || !validator.isURL(req.body.avatar)) {
       throw new mongoose.Error.ValidationError();
     }
-    await update(req, res, ['avatar']);
+    await update(req, res, next, ['avatar']);
   } catch (error) {
     errorHandler(error, res, next);
   }
