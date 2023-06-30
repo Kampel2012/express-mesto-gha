@@ -54,7 +54,7 @@ export const deleteCardById = async (req, res, next) => {
     if (card.owner.toString() !== req.user._id) {
       throw new ForbiddenError('Недостаточно прав для данного действия');
     }
-    await Card.findByIdAndDelete(req.params.cardId).orFail();
+    await Card.deleteOne(card).orFail();
     res
       .status(http2Constants.HTTP_STATUS_OK)
       .send({ message: 'Успешно удалено!' });
