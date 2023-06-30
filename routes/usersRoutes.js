@@ -18,7 +18,7 @@ router.get(
   '/me',
   celebrate({
     params: Joi.object().keys({
-      _id: Joi.string().alphanum().length(24).hex(),
+      _id: Joi.string().length(24).hex().required(),
     }),
   }),
   getUserInfo,
@@ -28,7 +28,7 @@ router.get(
   '/:userId',
   celebrate({
     params: Joi.object().keys({
-      userId: Joi.string().alphanum().length(24).hex(),
+      userId: Joi.string().length(24).hex().required(),
     }),
   }),
   getUserById,
